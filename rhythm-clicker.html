@@ -1,586 +1,643 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rhythm Clicker</title>
-  <style>
-    /* Use Google Fonts correctly */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm Clicker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'IBM Plex Mono', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            line-height: 1.6;
+            overflow: hidden;
+        }
 
-    :root {
-      color-scheme: dark;
-    }
-    body {
-      background-color: #1a1a1a;
-      color: #e0e0e0;
-      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-      box-sizing: border-box;
-      line-height: 1.6;
-    }
+        #game-container {
+            width: 100%;
+            max-width: 500px;
+            background-color: #242424;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+            box-sizing: border-box;
+        }
 
-    #game-container {
-      width: 100%;
-      max-width: 900px;
-      background-color: #242424;
-      border-radius: 12px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 24px;
-      box-sizing: border-box;
-    }
+        #game-panel {
+            width: 100%;
+            padding-bottom: 100%; /* 1:1 aspect ratio */
+            position: relative;
+            background-color: #121212;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
-    #game-panel {
-      width: 100%;
-      position: relative;
-      background-color: #121212;
-      border-radius: 8px;
-      overflow: hidden;
-      /* Maintain 16:9 aspect ratio */
-      aspect-ratio: 16 / 9;
-    }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
-    canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      display: block;
-      /* Prevent touch scroll-zoom interfering with clicks */
-      touch-action: none;
-    }
+        #game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            z-index: 10;
+            text-align: center;
+            flex-direction: column;
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
 
-    #game-overlay {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background-color: rgba(0, 0, 0, 0.7);
-      border-radius: 8px;
-      z-index: 10;
-      text-align: center;
-      flex-direction: column;
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
+        #game-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
 
-    #game-overlay.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
+        .cta-text {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f5c542;
+            margin-bottom: 20px;
+        }
 
-    .cta-text {
-      font-size: 2rem;
-      font-weight: bold;
-      color: #f5c542;
-      margin-bottom: 20px;
-    }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
 
-    .button-group {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
+        .game-button {
+            background-color: #f5c542;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 24px;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
 
-    .game-button {
-      background-color: #f5c542;
-      color: #1a1a1a;
-      border: none;
-      padding: 10px 24px;
-      font-weight: bold;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background-color 0.2s ease, transform 0.1s ease;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
+        .game-button:hover {
+            background-color: #e0b038;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
 
-    .game-button:hover {
-      background-color: #e0b038;
-      transform: translateY(-2px);
-    }
+        .game-button:active {
+            transform: translateY(0);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
 
-    .game-button:active {
-      transform: translateY(0);
-    }
+        #stats-panel {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            gap: 10px;
+        }
 
-    #stats-panel {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 16px;
-      gap: 10px;
-    }
+        #score-display, #timer-display, #combo-display, #high-score-display {
+            background-color: #333;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+        }
 
-    #score-display, #timer-display, #combo-display, #high-score-display {
-      background-color: #333;
-      padding: 8px 16px;
-      border-radius: 6px;
-      font-size: 1rem;
-      font-weight: bold;
-    }
+        .stat-label {
+            color: #f5c542;
+            font-size: 0.8rem;
+            display: block;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
 
-    .stat-label {
-      color: #f5c542;
-      font-size: 0.8rem;
-      display: block;
-      margin-bottom: 4px;
-      opacity: 0.7;
-    }
+        #high-score-display {
+            color: #f5c542;
+        }
 
-    #high-score-display {
-      color: #f5c542;
-    }
+        #band-name-display {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #f5c542;
+            text-align: center;
+        }
 
-    #message-box {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: #242424;
-      color: #e0e0e0;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      z-index: 100;
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      min-width: 250px;
-      text-align: center;
-    }
+        #message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #242424;
+            color: #e0e0e0;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            min-width: 250px;
+            text-align: center;
+        }
 
-    .message-content {
-      font-size: 1.2rem;
-      font-weight: bold;
-      white-space: pre-line;
-    }
+        .message-content {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
 
-    .message-button {
-      background-color: #f5c542;
-      color: #1a1a1a;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-  </style>
+        .message-button {
+            background-color: #f5c542;
+            color: #1a1a1a;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-  <main id="game-container">
-    <h1>Rhythm Clicker Game</h1>
 
-    <div id="game-panel">
-      <canvas id="gameCanvas"></canvas>
-      <div id="game-overlay">
-        <span class="cta-text">Start Game</span>
-        <div class="button-group">
-          <button id="startButton" class="game-button">Start</button>
+    <main id="game-container">
+        <h1>Rhythm Clicker Game</h1>
+
+        <div id="game-panel">
+            <canvas id="gameCanvas"></canvas>
+            <div id="game-overlay">
+                <span class="cta-text">Játék indítása</span>
+                <div class="button-group">
+                    <button id="startButton" class="game-button">Indítás</button>
+                </div>
+            </div>
         </div>
-      </div>
+
+        <div id="stats-panel">
+            <div id="score-display">
+                <span class="stat-label">Pontszám</span>
+                <span id="score-value">0</span>
+            </div>
+            <div id="combo-display">
+                <span class="stat-label">Kombó</span>
+                <span id="combo-value">0</span>
+            </div>
+            <div id="timer-display">
+                <span class="stat-label">Idő</span>
+                <span id="timer-value">30</span>
+            </div>
+            <div id="high-score-display">
+                <span class="stat-label">Legjobb pontszám</span>
+                <span id="high-score-value">0</span>
+            </div>
+        </div>
+        
+        <div id="band-name-display">
+            RIDER Zenekar
+        </div>
+
+        <div class="button-group">
+            <button id="pauseButton" class="game-button" style="display: none;">Szünet</button>
+            <button id="resumeButton" class="game-button" style="display: none;">Folytatás</button>
+            <button id="resetButton" class="game-button" style="display: none;">Újraindítás</button>
+        </div>
+    </main>
+
+    <div id="message-box" style="display:none;">
+        <p id="message-text" class="message-content"></p>
+        <button id="message-ok" class="message-button">OK</button>
     </div>
 
-    <div id="stats-panel">
-      <div id="score-display">
-        <span class="stat-label">Score</span>
-        <span id="score-value">0</span>
-      </div>
-      <div id="combo-display">
-        <span class="stat-label">Combo</span>
-        <span id="combo-value">0</span>
-      </div>
-      <div id="timer-display">
-        <span class="stat-label">Time</span>
-        <span id="timer-value">30</span>
-      </div>
-      <div id="high-score-display">
-        <span class="stat-label">Best Score</span>
-        <span id="high-score-value">0</span>
-      </div>
-    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // Globális változók használata
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
-    <div class="button-group">
-      <button id="pauseButton" class="game-button" style="display: none;">Pause</button>
-      <button id="resumeButton" class="game-button" style="display: none;">Resume</button>
-      <button id="resetButton" class="game-button" style="display: none;">Reset</button>
-    </div>
-  </main>
+        // Játékállapot változók és DOM elemek
+        const canvas = document.getElementById('gameCanvas');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resumeButton = document.getElementById('resumeButton');
+        const resetButton = document.getElementById('resetButton');
+        const overlay = document.getElementById('game-overlay');
+        const scoreValue = document.getElementById('score-value');
+        const comboValue = document.getElementById('combo-value');
+        const timerValue = document.getElementById('timer-value');
+        const highScoreValue = document.getElementById('high-score-value');
+        const messageBox = document.getElementById('message-box');
+        const messageText = document.getElementById('message-text');
+        const messageOkButton = document.getElementById('message-ok');
+        
+        const ctx = canvas.getContext('2d');
+        
+        let isPlaying = false;
+        let lastTimestamp = 0;
+        let notes = [];
+        let score = 0;
+        let combo = 0;
+        let highScore = 0;
+        let gameTime = 0;
+        const gameDuration = 30000;
+        let lastSpawnTime = 0;
+        let animationFrameId = null;
+        let imagesLoaded = false;
+        let userId = null;
+        
+        let db;
+        let auth;
+        let isAuthReady = false;
 
-  <div id="message-box" style="display:none;">
-    <p id="message-text" class="message-content"></p>
-    <button id="message-ok" class="message-button">OK</button>
-  </div>
+        const START_SPEED = 0.15;
+        const END_SPEED = 0.25;
+        const START_SPAWN_INTERVAL = 1200;
+        const END_SPAWN_INTERVAL = 600;
+        const NOTE_BASE_WIDTH = 60;
+        
+        const backgroundImage = new Image();
+backgroundImage.crossOrigin = "anonymous";
+backgroundImage.src = 'https://i.imgur.com/a8eEhUo.jpeg';
 
-  <script>
-    (function () {
-      const canvas = document.getElementById('gameCanvas');
-      const startButton = document.getElementById('startButton');
-      const pauseButton = document.getElementById('pauseButton');
-      const resumeButton = document.getElementById('resumeButton');
-      const resetButton = document.getElementById('resetButton');
-      const overlay = document.getElementById('game-overlay');
-      const scoreValue = document.getElementById('score-value');
-      const comboValue = document.getElementById('combo-value');
-      const timerValue = document.getElementById('timer-value');
-      const highScoreValue = document.getElementById('high-score-value');
-      const messageBox = document.getElementById('message-box');
-      const messageText = document.getElementById('message-text');
-      const messageOkButton = document.getElementById('message-ok');
+const noteImage = new Image();
+noteImage.crossOrigin = "anonymous";
+noteImage.src = 'https://i.imgur.com/0R8YJuZ.png';
 
-      if (!canvas || !startButton || !pauseButton || !resumeButton || !resetButton || !overlay || !scoreValue || !comboValue || !timerValue || !highScoreValue || !messageBox || !messageText || !messageOkButton) {
-        console.error('One or more required DOM elements are missing.');
-        return;
-      }
-
-      const ctx = canvas.getContext('2d');
-      const FRAME_RATE = 1000 / 60;
-
-      /* Responsive canvas sizing */
-      function resizeCanvas() {
-        const rect = canvas.getBoundingClientRect();
-        // Use CSS pixel resolution for simplicity and consistency with calculations
-        canvas.width = Math.max(1, Math.floor(rect.width));
-        canvas.height = Math.max(1, Math.floor(rect.height));
-        // Clear after resize
-        ctx.fillStyle = '#121212';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-      window.addEventListener('resize', resizeCanvas);
-      // Resize once DOM is ready
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', resizeCanvas);
-      } else {
-        resizeCanvas();
-      }
-
-      // Game state
-      let isPlaying = false;
-      let lastTimestamp = 0;
-      let notes = [];
-      let score = 0;
-      let combo = 0;
-      let highScore = parseInt(localStorage.getItem('bestScore')) || 0;
-      let gameTime = 0; // ms
-      let gameDuration = 30000; // 30 s
-      let lastSpawnTime = 0;
-      let animationFrameId = null;
-
-      const START_SPEED = 0.15; // px/ms
-      const END_SPEED = 0.30;   // px/ms
-      const START_SPAWN_INTERVAL = 1000; // ms
-      const END_SPAWN_INTERVAL = 400;   // ms
-      const RADIUS_MIN = 16;
-      const RADIUS_MAX = 24;
-
-      const backgroundImage = new Image();
-      backgroundImage.src = 'https://i.imgur.com/I8vg50C.jpeg';
-
-      class Note {
-        constructor(x, y, r, speed) {
-          this.x = x;
-          this.y = y;
-          this.r = r;
-          this.speed = speed;
-          this.isHit = false;
+function loadImages() {
+    let imagesToLoad = 2;
+    const onImageLoad = () => {
+        imagesToLoad--;
+        if (imagesToLoad === 0) {
+            imagesLoaded = true;
+            drawBackground();
         }
-        update(deltaTime) {
-          this.y += this.speed * deltaTime;
-        }
-        draw() {
-          ctx.save();
-          ctx.fillStyle = '#e0e0e0';
-          ctx.strokeStyle = '#f5c542';
-          ctx.lineWidth = 2;
-          ctx.translate(this.x, this.y);
+    };
+    backgroundImage.onload = onImageLoad;
+    noteImage.onload = onImageLoad;
+    
+    backgroundImage.onerror = () => { console.error("Hiba a háttérkép betöltésekor."); onImageLoad(); };
+    noteImage.onerror = () => { console.error("Hiba a leeső elem képének betöltésekor."); onImageLoad(); };
 
-          const headHeight = this.r * 1.5;
-          const headWidth = this.r;
-          ctx.beginPath();
-          ctx.ellipse(0, 0, headWidth / 2, headHeight / 2, Math.PI / 6, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.stroke();
+    // ⬇⬇ Ezt a két sort tedd ide a végére ⬇⬇
+    if (backgroundImage.complete) onImageLoad();
+    if (noteImage.complete) onImageLoad();
+}
 
-          const stemHeight = this.r * 2.5;
-          ctx.beginPath();
-          ctx.moveTo(headWidth * 0.4, -headHeight * 0.5);
-          ctx.lineTo(headWidth * 0.4, -headHeight * 0.5 - stemHeight);
-          ctx.stroke();
 
-          const flagLength = this.r * 1.5;
-          ctx.beginPath();
-          ctx.moveTo(headWidth * 0.4, -headHeight * 0.5 - stemHeight * 0.6);
-          ctx.lineTo(headWidth * 0.4 + flagLength, -headHeight * 0.5 - stemHeight * 0.4);
-          ctx.stroke();
+        class Note {
+            constructor(x, y, width, height, speed) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.speed = speed;
+            }
 
-          ctx.restore();
-        }
-        contains(px, py) {
-          const hitRadius = Math.max(this.r * 1.1, 22);
-          const dx = this.x - px;
-          const dy = this.y - py;
-          return Math.sqrt(dx * dx + dy * dy) <= hitRadius;
-        }
-      }
+            update(deltaTime) {
+                this.y += this.speed * deltaTime;
+            }
 
-      (function () {
-        const testNote = new Note(100, 100, 20, 0);
-        console.assert(testNote.contains(100, 100), "Note.contains failed at center.");
-        console.assert(!testNote.contains(100, 100 + Math.max(20 * 1.1, 22) + 1), "Note.contains failed outside radius.");
-      })();
+            // Kép rajzolása, ha betöltődött, egyébként tartalék rajzolás
+            draw() {
+                if (imagesLoaded) {
+                    ctx.drawImage(noteImage, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+                } else {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 20, 0, 2 * Math.PI);
+                    ctx.fillStyle = '#f5c542';
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
 
-      (function () {
-        const progress0 = 0;
-        const progress1 = 1;
-        const speed0 = START_SPEED + (END_SPEED - START_SPEED) * progress0;
-        const speed1 = START_SPEED + (END_SPEED - START_SPEED) * progress1;
-        const spawn0 = START_SPAWN_INTERVAL + (END_SPAWN_INTERVAL - START_SPAWN_INTERVAL) * progress0;
-        const spawn1 = START_SPAWN_INTERVAL + (END_SPAWN_INTERVAL - START_SPAWN_INTERVAL) * progress1;
-
-        console.assert(Math.abs(spawn0 - 1000) < 1, `Spawn interval at progress 0 is not 1000ms. Found ${spawn0}`);
-        console.assert(Math.abs(spawn1 - 400) < 1, `Spawn interval at progress 1 is not 400ms. Found ${spawn1}`);
-        console.assert(speed1 > speed0, "Note fall speed does not increase over time.");
-      })();
-
-      function getNoteSpawnInterval(progress) {
-        return START_SPAWN_INTERVAL + (END_SPAWN_INTERVAL - START_SPAWN_INTERVAL) * progress;
-      }
-
-      function getNoteFallSpeed(progress) {
-        return START_SPEED + (END_SPEED - START_SPEED) * progress;
-      }
-
-      function showMessage(text) {
-        messageText.textContent = text;
-        messageBox.style.display = 'flex';
-        messageOkButton.focus();
-      }
-      function hideMessage() {
-        messageBox.style.display = 'none';
-      }
-      function updateStatsDisplay() {
-        scoreValue.textContent = String(score);
-        comboValue.textContent = String(combo);
-        highScoreValue.textContent = String(highScore);
-      }
-      function updateTimerDisplay() {
-        const timeLeft = Math.max(0, gameDuration - gameTime);
-        timerValue.textContent = String(Math.ceil(timeLeft / 1000));
-      }
-
-      function drawVisualizer(progress, time) {
-        const barWidth = 8;
-        const barSpacing = 4;
-        const totalBars = Math.max(1, Math.floor(canvas.width / (barWidth + barSpacing)));
-        const baseY = canvas.height - 20;
-
-        for (let i = 0; i < totalBars; i++) {
-          const x = i * (barWidth + barSpacing);
-          const noise = Math.sin(time * 0.005 + i * 0.5) * 0.5 + 0.5;
-          const height = (Math.sin(time * 0.003 + i * 0.2) + 1.5) * 15 * progress * noise;
-          const hue = (i / totalBars) * 360;
-          ctx.fillStyle = `hsl(${hue}, 80%, 65%)`;
-          ctx.fillRect(x, baseY - height, barWidth, height);
-        }
-      }
-
-      function gameLoop(timestamp) {
-        if (!isPlaying) return;
-
-        if (gameTime === 0) {
-          console.assert(timerValue.textContent === "30", "Initial countdown text is not 30.");
+            // Ellenőrizze, hogy a koordináták a jegyzet határain belül vannak-e
+            contains(px, py) {
+                const dx = this.x - px;
+                const dy = this.y - py;
+                if (imagesLoaded) {
+                    // Képhez használt téglalap alakú találati terület
+                    return Math.abs(dx) <= this.width / 2 && Math.abs(dy) <= this.height / 2;
+                } else {
+                    // Tartalék rajzhoz használt kör alakú találati terület
+                    return Math.sqrt(dx * dx + dy * dy) <= 20;
+                }
+            }
         }
 
-        if (!lastTimestamp) lastTimestamp = timestamp;
-        const deltaTime = timestamp - lastTimestamp;
-        lastTimestamp = timestamp;
+        // --- Játék logikai funkciók ---
 
-        gameTime += deltaTime;
-        const progress = Math.min(1, gameTime / gameDuration);
-
-        if (gameTime >= gameDuration) {
-          endGame();
-          return;
+        function getNoteSpawnInterval(progress) {
+            return START_SPAWN_INTERVAL + (END_SPAWN_INTERVAL - START_SPAWN_INTERVAL) * progress;
         }
 
-        updateTimerDisplay();
-
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        if (backgroundImage.complete && backgroundImage.naturalHeight !== 0) {
-          ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
-        } else {
-          ctx.fillStyle = '#121212';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function getNoteFallSpeed(progress) {
+            return START_SPEED + (END_SPEED - START_SPEED) * progress;
         }
 
-        const currentSpawnInterval = getNoteSpawnInterval(progress);
-        const currentFallSpeed = getNoteFallSpeed(progress);
-
-        if (timestamp - lastSpawnTime > currentSpawnInterval) {
-          const radius = Math.random() * (RADIUS_MAX - RADIUS_MIN) + RADIUS_MIN;
-          const x = Math.random() * (canvas.width - 2 * radius) + radius;
-          const y = -radius;
-          notes.push(new Note(x, y, radius, currentFallSpeed));
-          lastSpawnTime = timestamp;
+        function showMessage(text) {
+            messageText.textContent = text;
+            messageBox.style.display = 'flex';
+            messageOkButton.focus();
         }
 
-        for (let i = notes.length - 1; i >= 0; i--) {
-          const note = notes[i];
-          note.update(deltaTime);
-          note.draw();
+        function hideMessage() {
+            messageBox.style.display = 'none';
+        }
 
-          if (note.y - note.r > canvas.height) {
-            notes.splice(i, 1);
-            combo = 0;
+        function updateStatsDisplay() {
+            scoreValue.textContent = score;
+            comboValue.textContent = combo;
+            highScoreValue.textContent = highScore;
+        }
+
+        function updateTimerDisplay() {
+            const timeLeft = Math.max(0, gameDuration - gameTime);
+            timerValue.textContent = Math.ceil(timeLeft / 1000);
+        }
+
+        function drawBackground() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (imagesLoaded) {
+                ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+            } else {
+                ctx.fillStyle = '#121212';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+        }
+        
+        function drawVisualizer(progress, time) {
+            ctx.save();
+            const barWidth = 8;
+            const barSpacing = 4;
+            const totalBars = Math.floor(canvas.width / (barWidth + barSpacing));
+            const baseY = canvas.height - 20;
+
+            for (let i = 0; i < totalBars; i++) {
+                const x = i * (barWidth + barSpacing);
+                const noise = Math.sin(time * 0.005 + i * 0.5) * 0.5 + 0.5;
+                const height = (Math.sin(time * 0.003 + i * 0.2) + 1.5) * 15 * progress * noise;
+                const hue = (i / totalBars) * 360;
+                ctx.fillStyle = `hsl(${hue}, 80%, 65%)`;
+                ctx.fillRect(x, baseY - height, barWidth, height);
+            }
+            ctx.restore();
+        }
+
+        function gameLoop(timestamp) {
+            if (!isPlaying) return;
+
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            const deltaTime = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+
+            gameTime += deltaTime;
+            const progress = Math.min(1, gameTime / gameDuration);
+
+            if (gameTime >= gameDuration) {
+                endGame();
+                return;
+            }
+
+            updateTimerDisplay();
+            drawBackground();
+            drawVisualizer(progress, gameTime);
+
+            const currentSpawnInterval = getNoteSpawnInterval(progress);
+            const currentFallSpeed = getNoteFallSpeed(progress);
+
+            if (timestamp - lastSpawnTime > currentSpawnInterval) {
+                const noteWidth = NOTE_BASE_WIDTH;
+                const noteHeight = imagesLoaded ? noteWidth / (noteImage.naturalWidth / noteImage.naturalHeight) : noteWidth;
+                const x = Math.random() * (canvas.width - noteWidth) + noteWidth / 2;
+                const y = -noteHeight / 2;
+                notes.push(new Note(x, y, noteWidth, noteHeight, currentFallSpeed));
+                lastSpawnTime = timestamp;
+            }
+
+            for (let i = notes.length - 1; i >= 0; i--) {
+                const note = notes[i];
+                note.update(deltaTime);
+                note.draw();
+
+                if (note.y - note.height / 2 > canvas.height) {
+                    notes.splice(i, 1);
+                    combo = 0;
+                    updateStatsDisplay();
+                }
+            }
+            
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function handleClick(event) {
+            if (!isPlaying) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+
+            const clientX = event.clientX || event.touches?.[0]?.clientX;
+            const clientY = event.clientY || event.touches?.[0]?.clientY;
+
+            const mouseX = (clientX - rect.left) * scaleX;
+            const mouseY = (clientY - rect.top) * scaleY;
+
+            let hit = false;
+            for (let i = notes.length - 1; i >= 0; i--) {
+                const note = notes[i];
+                if (note.contains(mouseX, mouseY)) {
+                    score += 10;
+                    combo++;
+                    notes.splice(i, 1);
+                    hit = true;
+                    break;
+                }
+            }
+
+            if (!hit) combo = 0;
             updateStatsDisplay();
-          }
         }
 
-        drawVisualizer(progress, gameTime);
-
-        animationFrameId = requestAnimationFrame(gameLoop);
-      }
-
-      function handleClick(event) {
-        if (!isPlaying) return;
-
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-
-        const clientX = (event.clientX ?? (event.touches && event.touches[0] ? event.touches[0].clientX : 0));
-        const clientY = (event.clientY ?? (event.touches && event.touches[0] ? event.touches[0].clientY : 0));
-
-        const mouseX = (clientX - rect.left) * scaleX;
-        const mouseY = (clientY - rect.top) * scaleY;
-
-        let hit = false;
-        for (let i = notes.length - 1; i >= 0; i--) {
-          const note = notes[i];
-          if (note.contains(mouseX, mouseY)) {
-            score += 10;
-            combo++;
-            notes.splice(i, 1);
-            hit = true;
-            break;
-          }
+        function startGame() {
+            if (isPlaying) return;
+            isPlaying = true;
+            overlay.classList.add('hidden');
+            startButton.style.display = 'none';
+            pauseButton.style.display = 'inline-block';
+            resetButton.style.display = 'inline-block';
+            gameTime = 0;
+            score = 0;
+            combo = 0;
+            notes = [];
+            lastSpawnTime = performance.now();
+            updateStatsDisplay();
+            updateTimerDisplay();
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
-        if (!hit) combo = 0;
-        updateStatsDisplay();
-      }
 
-      function startGame() {
-        if (isPlaying) return;
-        isPlaying = true;
-        overlay.classList.add('hidden');
-        startButton.style.display = 'none';
-        pauseButton.style.display = 'inline-block';
-        resumeButton.style.display = 'none';
-        resetButton.style.display = 'inline-block';
-        gameTime = 0;
-        score = 0;
-        combo = 0;
-        notes = [];
-        lastSpawnTime = performance.now();
-        updateStatsDisplay();
-        updateTimerDisplay();
-        animationFrameId = requestAnimationFrame(gameLoop);
-      }
-
-      function pauseGame() {
-        if (!isPlaying) return;
-        isPlaying = false;
-        cancelAnimationFrame(animationFrameId);
-        pauseButton.style.display = 'none';
-        resumeButton.style.display = 'inline-block';
-        showMessage("Game Paused");
-      }
-
-      function resumeGame() {
-        if (isPlaying) return;
-        isPlaying = true;
-        hideMessage();
-        pauseButton.style.display = 'inline-block';
-        resumeButton.style.display = 'none';
-        lastTimestamp = performance.now();
-        animationFrameId = requestAnimationFrame(gameLoop);
-      }
-
-      function resetGame() {
-        cancelAnimationFrame(animationFrameId);
-        isPlaying = false;
-        notes = [];
-        score = 0;
-        combo = 0;
-        gameTime = 0;
-        lastTimestamp = 0;
-        startButton.style.display = 'inline-block';
-        pauseButton.style.display = 'none';
-        resumeButton.style.display = 'none';
-        resetButton.style.display = 'none';
-        overlay.classList.remove('hidden');
-        updateStatsDisplay();
-        updateTimerDisplay();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-
-      function endGame() {
-        cancelAnimationFrame(animationFrameId);
-        isPlaying = false;
-
-        let finalScoreText = `Game Over! Your score: ${score}`;
-        if (score > highScore) {
-          highScore = score;
-          localStorage.setItem('bestScore', String(highScore));
-          finalScoreText += "\nNew High Score!";
+        function pauseGame() {
+            if (!isPlaying) return;
+            isPlaying = false;
+            cancelAnimationFrame(animationFrameId);
+            pauseButton.style.display = 'none';
+            resumeButton.style.display = 'inline-block';
+            showMessage("Játék szüneteltetve");
         }
-        showMessage(finalScoreText);
-        updateStatsDisplay();
-        startButton.style.display = 'none';
-        pauseButton.style.display = 'none';
-        resumeButton.style.display = 'none';
-        resetButton.style.display = 'inline-block';
-      }
 
-      function handleMessageBoxClick() {
-        hideMessage();
-      }
+        function resumeGame() {
+            if (isPlaying) return;
+            isPlaying = true;
+            hideMessage();
+            pauseButton.style.display = 'inline-block';
+            resumeButton.style.display = 'none';
+            lastTimestamp = performance.now();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
 
-      window.RiderMiniGame = {
-        start: startGame,
-        reset: resetGame,
-        pause: pauseGame,
-        resume: resumeGame
-      };
+        function resetGame() {
+            cancelAnimationFrame(animationFrameId);
+            isPlaying = false;
+            notes = [];
+            score = 0;
+            combo = 0;
+            gameTime = 0;
+            lastTimestamp = 0;
+            startButton.style.display = 'inline-block';
+            pauseButton.style.display = 'none';
+            resumeButton.style.display = 'none';
+            resetButton.style.display = 'none';
+            overlay.classList.remove('hidden');
+            updateStatsDisplay();
+            updateTimerDisplay();
+            drawBackground();
+        }
 
-      canvas.addEventListener('mousedown', handleClick);
-      canvas.addEventListener('touchstart', handleClick, { passive: true });
-      startButton.addEventListener('click', startGame);
-      pauseButton.addEventListener('click', pauseGame);
-      resumeButton.addEventListener('click', resumeGame);
-      resetButton.addEventListener('click', resetGame);
-      messageOkButton.addEventListener('click', handleMessageBoxClick);
+        async function endGame() {
+            cancelAnimationFrame(animationFrameId);
+            isPlaying = false;
+            
+            let finalScoreText = `Vége a játéknak! A pontszámod: ${score}`;
+            if (score > highScore) {
+                // A globális rekord frissítése a Firestore-ban
+                const highScoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'rhythm_clicker_scores', 'high_score');
+                try {
+                    await setDoc(highScoreRef, { score: score, userId: userId }, { merge: true });
+                    finalScoreText += "\nÚj rekord!";
+                } catch (error) {
+                    console.error("Hiba a rekord mentésekor:", error);
+                    finalScoreText += "\nA rekordot nem sikerült elmenteni.";
+                }
+            }
 
-      updateStatsDisplay();
-      updateTimerDisplay();
-      // Ensure canvas is sized at start
-      resizeCanvas();
-    })();
-  </script>
+            showMessage(finalScoreText);
+            updateStatsDisplay();
+            startButton.style.display = 'none';
+            pauseButton.style.display = 'none';
+            resumeButton.style.display = 'none';
+            resetButton.style.display = 'inline-block';
+        }
+
+        function handleMessageBoxClick() {
+            hideMessage();
+        }
+
+        // --- Firebase & Inicializálás ---
+
+        async function initFirebaseAndGame() {
+            try {
+                // Firebase alkalmazás és szolgáltatások inicializálása
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                
+                // Felhasználó hitelesítése
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                // Hitelesítési állapotfigyelő beállítása
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        isAuthReady = true;
+
+                        // Valós idejű rekordfrissítések figyelése
+                        const highScoreRef = doc(db, 'artifacts', appId, 'public', 'data', 'rhythm_clicker_scores', 'high_score');
+                        onSnapshot(highScoreRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const data = docSnap.data();
+                                highScore = data.score;
+                                updateStatsDisplay();
+                            } else {
+                                // Ha nincs rekord, inicializálás 0-ra
+                                highScore = 0;
+                                updateStatsDisplay();
+                                setDoc(highScoreRef, { score: 0, userId: "initial" });
+                            }
+                        });
+                    } else {
+                        isAuthReady = true;
+                    }
+                });
+            } catch (error) {
+                console.error("Hiba a Firebase inicializálásakor:", error);
+            }
+        }
+        
+        // Eseményfigyelők
+        canvas.addEventListener('mousedown', handleClick);
+        canvas.addEventListener('touchstart', handleClick);
+        startButton.addEventListener('click', startGame);
+        pauseButton.addEventListener('click', pauseGame);
+        resumeButton.addEventListener('click', resumeGame);
+        resetButton.addEventListener('click', resetGame);
+        messageOkButton.addEventListener('click', handleMessageBoxClick);
+
+        // Mindent elindítunk az oldal betöltésekor
+        window.onload = function() {
+            initFirebaseAndGame();
+            updateStatsDisplay();
+            updateTimerDisplay();
+            loadImages();
+        };
+
+    </script>
 </body>
 </html>
